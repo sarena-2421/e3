@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>108課綱學測英文模擬App - 文法專項</title>
+    <!-- 引入 React 和 ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- 引入 Babel 用於解析 JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        body { font-family: 'Roboto', 'Noto Sans TC', sans-serif; }
+        .font-serif { font-family: 'Merriweather', serif; }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        /* 隱藏捲軸但保留功能 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-teal-50 h-screen w-full flex justify-center items-center overflow-hidden">
+    <div id="root" class="w-full h-full max-w-md bg-white shadow-2xl relative flex flex-col"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // -----------------------------------------------------------------------------
+        // 0. 內建圖標元件
+        // -----------------------------------------------------------------------------
+        const Icons = {
+            BookOpen: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>,
+            CheckCircle: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
+            XCircle: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>,
+            ChevronRight: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m9 18 6-6-6-6"/></svg>,
+            ChevronLeft: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m15 18-6-6 6-6"/></svg>,
+            RotateCcw: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>,
+            Home: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+            Award: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>,
+            Grid: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>,
+            Flag: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>,
+            PenTool: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m12 19 7-7 3 3-7 7-3-3z"/><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="m2 2 7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>,
+            Puzzle: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M19.439 15.424a1 1 0 0 0-1.438-1.44l-3.213 3.214a1 1 0 0 0 0 1.414l3.214 3.214a1 1 0 0 0 1.439-1.44l-2.5-2.5 2.5-2.449Z"/><path d="M4.561 8.576a1 1 0 0 0 1.438 1.44l3.213-3.214a1 1 0 0 0 0-1.414L6 2.168a1 1 0 0 0-1.439 1.44l2.5 2.5-2.5 2.449Z"/><path d="M16 4h2a2 2 0 0 1 2 2v2"/><path d="M4 16v2a2 2 0 0 0 2 2h2"/></svg>,
+            Tag: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94 .94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>,
+            Zap: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        };
+
+        const { BookOpen, CheckCircle, XCircle, ChevronRight, ChevronLeft, RotateCcw, Home, Award, Grid, Flag, PenTool, Puzzle, Tag, Zap } = Icons;
+
+        // -----------------------------------------------------------------------------
+        // 1. 真實題庫範例
+        // -----------------------------------------------------------------------------
+        const REAL_QUESTION_EXAMPLES = [
+            {
+                id: 'real_gram_1',
+                type: 'single',
+                category: 'Tenses',
+                text: 'By the time the police arrived, the thieves ______ already ______.',
+                options: ['had / left', 'have / left', 'were / leaving', 'would / leave'],
+                correctAnswer: [0],
+                explanation: '過去完成式 (had + p.p.) 用於描述「過去某個時間點之前」已經發生的動作。',
+                difficulty: 'Medium'
+            },
+            {
+                id: 'real_gram_2',
+                type: 'single',
+                category: 'Prepositions',
+                text: 'The scientist is dedicated ______ finding a cure for the disease.',
+                options: ['to', 'for', 'in', 'with'],
+                correctAnswer: [0],
+                explanation: '片語 be dedicated to + V-ing/N (致力於...)，to 是介係詞。',
+                difficulty: 'Medium'
+            }
+        ];
+
+        // -----------------------------------------------------------------------------
+        // 2. 文法資料庫 (Grammar Database)
+        // -----------------------------------------------------------------------------
+        const PREPOSITIONS = [
+            { q: 'He is afraid ______ spiders.', ans: 'of', opts: ['at', 'with', 'about'] },
+            { q: 'She is interested ______ learning French.', ans: 'in', opts: ['on', 'at', 'with'] },
+            { q: 'The book consists ______ five chapters.', ans: 'of', opts: ['in', 'with', 'for'] },
+            { q: 'We arrived ______ the airport at 6 AM.', ans: 'at', opts: ['on', 'to', 'in'] },
+            { q: 'He apologized ______ being late.', ans: 'for', opts: ['of', 'to', 'about'] },
+            { q: 'This car belongs ______ my brother.', ans: 'to', opts: ['with', 'for', 'at'] },
+            { q: 'I am satisfied ______ the result.', ans: 'with', opts: ['at', 'about', 'of'] },
+            { q: 'She is good ______ playing the piano.', ans: 'at', opts: ['in', 'on', 'with'] },
+            { q: 'We rely ______ him to finish the job.', ans: 'on', opts: ['in', 'at', 'to'] },
+            { q: 'The city is famous ______ its historical sites.', ans: 'for', opts: ['of', 'with', 'in'] },
+            { q: 'Prevent him ______ doing that.', ans: 'from', opts: ['of', 'to', 'by'] },
+            { q: 'Look ______ the word in the dictionary.', ans: 'up', opts: ['at', 'for', 'in'] }
+        ];
+
+        const TENSES = [
+            { context: 'Look! It ______.', ans: 'is raining', opts: ['rains', 'rained', 'has rained'], type: 'Present Continuous' },
+            { context: 'I ______ my homework before mom came home.', ans: 'had finished', opts: ['finished', 'have finished', 'finish'], type: 'Past Perfect' },
+            { context: 'She ______ in Taipei for ten years.', ans: 'has lived', opts: ['lives', 'is living', 'live'], type: 'Present Perfect' },
+            { context: 'At this time tomorrow, we ______ to Japan.', ans: 'will be flying', opts: ['will fly', 'fly', 'have flown'], type: 'Future Continuous' },
+            { context: 'He ______ television when the phone rang.', ans: 'was watching', opts: ['watched', 'is watching', 'has watched'], type: 'Past Continuous' },
+            { context: 'Water ______ at 100 degrees Celsius.', ans: 'boils', opts: ['is boiling', 'boiled', 'has boiled'], type: 'Present Simple' },
+            { context: 'I ______ him since we were children.', ans: 'have known', opts: ['know', 'knew', 'am knowing'], type: 'Present Perfect' },
+            { context: 'While I ______ down the street, I met an old friend.', ans: 'was walking', opts: ['walked', 'walk', 'am walking'], type: 'Past Continuous' }
+        ];
+
+        const VERB_FORMS = [
+            { context: 'He enjoys ______ movies.', ans: 'watching', opts: ['to watch', 'watch', 'watched'], type: 'Gerund (enjoy + Ving)' },
+            { context: 'She decided ______ abroad.', ans: 'to study', opts: ['studying', 'study', 'studied'], type: 'Infinitive (decide + to V)' },
+            { context: '______ is my favorite hobby.', ans: 'Swimming', opts: ['Swim', 'Swam', 'To swimming'], type: 'Gerund Subject' },
+            { context: 'Please stop ______ noise.', ans: 'making', opts: ['to make', 'make', 'made'], type: 'stop + Ving' },
+            { context: 'He stopped ______ a newspaper.', ans: 'to buy', opts: ['buying', 'buy', 'bought'], type: 'stop + to V (purpose)' },
+            { context: 'I saw him ______ the street.', ans: 'crossing', opts: ['to cross', 'crossed', 'crosses'], type: 'Perception Verb' },
+            { context: 'The broken window needs ______.', ans: 'repairing', opts: ['to repair', 'repaired', 'repair'], type: 'need + Ving' },
+            { context: 'It is no use ______ over spilt milk.', ans: 'crying', opts: ['to cry', 'cry', 'cried'], type: 'Idiom' },
+            { context: 'Would you mind ______ the door?', ans: 'opening', opts: ['to open', 'open', 'opened'], type: 'mind + Ving' }
+        ];
+
+        const PHRASAL_VERBS = [
+            { context: 'Please ______ your shoes before entering.', ans: 'take off', opts: ['put on', 'get off', 'turn off'], def: '脫下' },
+            { context: 'I ran ______ of gas on the highway.', ans: 'out', opts: ['away', 'off', 'over'], def: '用盡' },
+            { context: 'He looks ______ to his father.', ans: 'up', opts: ['down', 'at', 'for'], def: '尊敬' },
+            { context: 'Don\'t give ______ on your dreams.', ans: 'up', opts: ['in', 'out', 'away'], def: '放棄' },
+            { context: 'The plane took ______ on time.', ans: 'off', opts: ['up', 'out', 'away'], def: '起飛' },
+            { context: 'Can you pick me ______ at the station?', ans: 'up', opts: ['out', 'off', 'on'], def: '接送' },
+            { context: 'We need to figure ______ a solution.', ans: 'out', opts: ['in', 'up', 'on'], def: '想出/解決' },
+            { context: 'She takes ______ her mother.', ans: 'after', opts: ['on', 'over', 'up'], def: '長得像' }
+        ];
+
+        // -----------------------------------------------------------------------------
+        // Helper: Fisher-Yates Shuffle
+        // -----------------------------------------------------------------------------
+        const fisherYatesShuffle = (array) => {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex !== 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        };
+
+        // -----------------------------------------------------------------------------
+        // Generator Logic
+        // -----------------------------------------------------------------------------
+        const generateGrammarMock = (type, itemIndex, variantCount) => {
+            const isReview = variantCount > 0;
+            const reviewLabel = isReview ? '【💡】' : '';
+
+            if (type === 'preposition') {
+                const item = PREPOSITIONS[itemIndex % PREPOSITIONS.length];
+                return {
+                    category: 'Prepositions',
+                    text: `${reviewLabel} Fill in the blank:\n"${item.q}"`,
+                    options: [item.ans, ...item.opts],
+                    explanation: `Correct usage: "${item.ans}". This is a fixed collocation.`,
+                    correctIndex: 0,
+                    isReview
+                };
+            } else if (type === 'tense') {
+                const item = TENSES[itemIndex % TENSES.length];
+                return {
+                    category: `Tenses`,
+                    text: `${reviewLabel} Correct verb form:\n"${item.context}"`,
+                    options: [item.ans, ...item.opts],
+                    explanation: `Context: ${item.type}.`,
+                    correctIndex: 0,
+                    isReview
+                };
+            } else if (type === 'verb_form') {
+                const item = VERB_FORMS[itemIndex % VERB_FORMS.length];
+                return {
+                    category: 'Verb Forms',
+                    text: `${reviewLabel} Select correct form:\n"${item.context}"`,
+                    options: [item.ans, ...item.opts],
+                    explanation: `Rule: ${item.type}.`,
+                    correctIndex: 0,
+                    isReview
+                };
+            } else { // Phrasal verbs
+                const item = PHRASAL_VERBS[itemIndex % PHRASAL_VERBS.length];
+                return {
+                    category: 'Phrasal Verbs',
+                    text: `${reviewLabel} Complete phrasal verb:\n"${item.context}"`,
+                    options: [item.ans, ...item.opts],
+                    explanation: `Meaning: "${item.def}". Correct: "${item.ans}".`,
+                    correctIndex: 0,
+                    isReview
+                };
+            }
+        };
+
+        const generateMockQuestions = (startId, count) => {
+            const mocks = [];
+            const types = ['preposition', 'tense', 'verb_form', 'phrasal'];
+            let taskPool = [];
+            
+            const typeDataCounts = {
+                'preposition': PREPOSITIONS.length,
+                'tense': TENSES.length,
+                'verb_form': VERB_FORMS.length,
+                'phrasal': PHRASAL_VERBS.length
+            };
+
+            let totalBaseItems = 0;
+            for(let k in typeDataCounts) totalBaseItems += typeDataCounts[k];
+            
+            const loopsNeeded = Math.ceil(count / totalBaseItems) + 1;
+
+            for (let loop = 0; loop < loopsNeeded; loop++) {
+                types.forEach(type => {
+                    const maxIdx = typeDataCounts[type];
+                    for (let i = 0; i < maxIdx; i++) {
+                        taskPool.push({ type, itemIndex: i, variantCount: loop });
+                    }
+                });
+            }
+
+            taskPool = fisherYatesShuffle(taskPool);
+            const selectedTasks = taskPool.slice(0, count);
+
+            selectedTasks.forEach((task, i) => {
+                const content = generateGrammarMock(task.type, task.itemIndex, task.variantCount);
+                
+                let finalOptions = content.options.map((text, idx) => ({ 
+                    text, 
+                    isCorrect: idx === content.correctIndex 
+                }));
+                finalOptions = fisherYatesShuffle(finalOptions);
+                
+                let correctIndices = [];
+                finalOptions.forEach((opt, idx) => {
+                    if (opt.isCorrect) correctIndices.push(idx);
+                });
+
+                const answerLabels = correctIndices.map(idx => String.fromCharCode(65 + idx)).join(', ');
+
+                mocks.push({
+                    id: `mock_gram_${startId + i}`,
+                    type: 'single',
+                    category: content.category,
+                    text: `[Q${startId + i}] ${content.text}`,
+                    options: finalOptions.map(o => o.text),
+                    correctAnswer: correctIndices,
+                    explanation: `${content.explanation} (Ans: ${answerLabels})`,
+                    difficulty: 'Medium',
+                    isReview: content.isReview
+                });
+            });
+            return mocks;
+        };
+
+        // -----------------------------------------------------------------------------
+        // App Component
+        // -----------------------------------------------------------------------------
+        function GrammarApp() {
+            const [currentScreen, setCurrentScreen] = useState('home'); 
+            const [questions, setQuestions] = useState([]);
+            const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+            const [userAnswers, setUserAnswers] = useState({});
+            const [markedQuestions, setMarkedQuestions] = useState(new Set()); 
+            const [showExplanation, setShowExplanation] = useState(false);
+
+            useEffect(() => {
+                let flattened = [];
+                REAL_QUESTION_EXAMPLES.forEach(item => {
+                    flattened.push(item);
+                });
+
+                const currentCount = flattened.length;
+                const needed = 500 - currentCount;
+                if (needed > 0) {
+                    const mocks = generateMockQuestions(currentCount + 1, needed);
+                    flattened = [...flattened, ...mocks];
+                }
+
+                setQuestions(flattened);
+            }, []);
+
+            const startExam = () => {
+                setCurrentQuestionIndex(0);
+                setUserAnswers({});
+                setMarkedQuestions(new Set());
+                setShowExplanation(false);
+                setCurrentScreen('quiz');
+            };
+
+            const handleAnswerSelect = (optionIndex) => {
+                if (showExplanation) return; 
+                const currentQ = questions[currentQuestionIndex];
+                setUserAnswers(prev => ({ ...prev, [currentQ.id]: [optionIndex] }));
+                setShowExplanation(true);
+            };
+
+            const toggleMarkQuestion = () => {
+                const qId = questions[currentQuestionIndex].id;
+                setMarkedQuestions(prev => {
+                    const newSet = new Set(prev);
+                    if (newSet.has(qId)) newSet.delete(qId);
+                    else newSet.add(qId);
+                    return newSet;
+                });
+            };
+
+            const calculateScore = () => {
+                let rawScore = 0;
+                questions.forEach(q => {
+                    const userAns = userAnswers[q.id] || [];
+                    const correctAns = q.correctAnswer;
+                    if (userAns.length > 0 && userAns[0] === correctAns[0]) {
+                        rawScore++;
+                    }
+                });
+                const percentage = (rawScore / questions.length) * 100;
+                let rank = 0;
+                if (percentage >= 90) rank = 15;
+                else if (percentage >= 85) rank = 14;
+                else if (percentage >= 80) rank = 13;
+                else if (percentage >= 70) rank = 11;
+                else if (percentage >= 60) rank = 9;
+                else rank = Math.floor(percentage / 10) + 1;
+
+                return { rawScore, total: questions.length, rank, percentage };
+            };
+
+            if (currentScreen === 'home') return (
+                <div className="flex flex-col items-center justify-center h-full p-4 space-y-6 animate-fade-in bg-gradient-to-br from-teal-50 to-cyan-50">
+                    <div className="text-center space-y-3">
+                        <div className="bg-teal-600 p-4 rounded-full inline-block mb-2 shadow-lg">
+                            <Icons.BookOpen size={48} className="text-white" />
+                        </div>
+                        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight font-serif">文法專項特訓</h1>
+                        <p className="text-base text-gray-600 font-medium">時態 • 介系詞 • 動詞變化</p>
+                    </div>
+                    <button 
+                        onClick={startExam}
+                        className="w-full max-w-xs flex items-center justify-center p-4 bg-teal-600 text-white rounded-xl shadow-lg hover:bg-teal-700 transition transform active:scale-95"
+                    >
+                        <Icons.Zap size={24} className="mr-2" />
+                        <span className="text-lg font-bold">開始特訓</span>
+                    </button>
+                    <p className="text-xs text-teal-500 mt-4">收錄 500 題高頻考點</p>
+                </div>
+            );
+
+            if (currentScreen === 'result') {
+                const { rawScore, total, rank, percentage } = calculateScore();
+                return (
+                    <div className="flex flex-col items-center h-full bg-teal-50 p-4 overflow-y-auto">
+                        <div className="w-full max-w-sm space-y-4 mt-4">
+                            <div className="bg-white rounded-2xl shadow-xl p-6 text-center relative">
+                                <h2 className="text-2xl font-extrabold text-gray-800 mb-2">測驗結束</h2>
+                                <div className="flex justify-center my-4">
+                                    <div className="text-5xl font-black text-teal-600">{percentage.toFixed(0)}<span className="text-xl text-gray-400 font-normal">%</span></div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3 text-left">
+                                    <div className="bg-teal-50 p-3 rounded-xl">
+                                        <p className="text-xs text-teal-500 font-bold mb-1">答對題數</p>
+                                        <p className="text-xl font-bold text-teal-800">{rawScore} / {total}</p>
+                                    </div>
+                                    <div className="bg-teal-50 p-3 rounded-xl">
+                                        <p className="text-xs text-teal-500 font-bold mb-1">模擬級分</p>
+                                        <p className="text-xl font-bold text-teal-800">{rank}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <button onClick={() => setCurrentScreen('home')} className="w-full bg-teal-800 hover:bg-teal-900 text-white py-3 rounded-xl font-bold shadow-lg transition flex items-center justify-center space-x-2">
+                                <Icons.RotateCcw size={20} /> <span>返回首頁</span>
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            const q = questions[currentQuestionIndex];
+            if (!q) return <div className="flex items-center justify-center h-full text-xl font-serif text-gray-500">Loading...</div>;
+
+            const currentAns = userAnswers[q.id] || [];
+            const isMarked = markedQuestions.has(q.id);
+
+            return (
+                <div className="flex flex-col h-full bg-gray-50 relative font-sans">
+                    
+                    <div className="bg-white shadow-sm px-3 py-2 flex justify-between items-center sticky top-0 z-10 border-b border-gray-200">
+                        <button onClick={() => setCurrentScreen('home')} className="p-2 rounded-lg text-gray-500 active:bg-gray-100">
+                            <Icons.Home size={20} />
+                        </button>
+                        <div className="text-sm font-bold text-gray-700">
+                            {currentQuestionIndex + 1} / {questions.length}
+                        </div>
+                        <button onClick={toggleMarkQuestion} className={`p-2 rounded-lg transition ${isMarked ? 'bg-red-50 text-red-500' : 'text-gray-400 active:bg-gray-100'}`}>
+                            <Icons.Flag size={20} fill={isMarked ? "currentColor" : "none"} />
+                        </button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-3 scroll-smooth no-scrollbar">
+                        <div className="bg-white rounded-xl p-4 shadow-sm ring-1 ring-gray-200 mb-20">
+                            <div className="flex items-center space-x-2 mb-3">
+                                <span className="text-xs font-bold px-2 py-1 rounded bg-teal-100 text-teal-800">
+                                    單選
+                                </span>
+                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded border border-gray-200 truncate max-w-[150px]">
+                                    {q.category}
+                                </span>
+                                {q.isReview && <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-200 flex items-center"><Icons.Tag size={10} className="mr-1" />複習</span>}
+                            </div>
+
+                            <h2 className="text-lg font-medium text-gray-900 mb-6 leading-relaxed whitespace-pre-wrap">
+                                {q.text}
+                            </h2>
+
+                            <div className="space-y-3">
+                                {q.options.map((option, idx) => {
+                                    const isSelected = currentAns.includes(idx);
+                                    let btnClass = "w-full text-left p-3 rounded-lg border transition-all flex items-start space-x-3 active:scale-[0.98] ";
+                                    
+                                    if (showExplanation) {
+                                        if (q.correctAnswer.includes(idx)) btnClass += "border-green-500 bg-green-50 text-green-900";
+                                        else if (isSelected) btnClass += "border-red-500 bg-red-50 text-red-900";
+                                        else btnClass += "border-gray-100 text-gray-400 opacity-60";
+                                    } else {
+                                        if (isSelected) btnClass += "border-teal-500 bg-teal-50 text-teal-900 shadow-sm";
+                                        else btnClass += "border-gray-200 bg-gray-50 text-gray-700";
+                                    }
+
+                                    return (
+                                        <button key={idx} onClick={() => handleAnswerSelect(idx)} className={btnClass} disabled={showExplanation}>
+                                            <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold border transition-colors ${
+                                                isSelected ? 'bg-teal-600 border-teal-600 text-white' : 'border-gray-300 text-gray-500'
+                                            } ${showExplanation && q.correctAnswer.includes(idx) ? '!bg-green-600 !border-green-600 !text-white' : ''}`}>
+                                                {String.fromCharCode(65 + idx)}
+                                            </div>
+                                            <span className="pt-0.5 text-base">{option}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {showExplanation && (
+                                <div className="mt-6 bg-blue-50 p-3 rounded-lg border border-blue-100 animate-fade-in">
+                                    <div className="flex items-center space-x-2 text-blue-900 font-bold mb-2">
+                                        <Icons.Award size={18} />
+                                        <span className="text-sm">解析</span>
+                                    </div>
+                                    <p className="text-sm text-blue-900 leading-relaxed">{q.explanation}</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="absolute bottom-0 w-full bg-white border-t border-gray-200 p-3 flex justify-between items-center safe-area-bottom shadow-lg z-20">
+                        <button 
+                            onClick={() => { setShowExplanation(false); setCurrentQuestionIndex(prev => Math.max(0, prev - 1)); }}
+                            disabled={currentQuestionIndex === 0}
+                            className="flex items-center space-x-1 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 disabled:opacity-30 active:bg-gray-200 transition"
+                        >
+                            <Icons.ChevronLeft size={18} /> <span className="text-sm font-medium">上一題</span>
+                        </button>
+                        
+                        <button 
+                            onClick={() => {
+                                if (currentQuestionIndex < questions.length - 1) { setShowExplanation(false); setCurrentQuestionIndex(prev => prev + 1); } 
+                                else { setCurrentScreen('result'); setShowGrid(false); }
+                            }}
+                            className="bg-teal-600 active:bg-teal-700 text-white px-6 py-2 rounded-lg font-bold shadow-md flex items-center transition"
+                        >
+                            <span className="text-sm">{currentQuestionIndex === questions.length - 1 ? '完成' : '下一題'}</span> <Icons.ChevronRight size={18} className="ml-1"/>
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<GrammarApp />);
+    </script>
+</body>
+</html>
